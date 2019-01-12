@@ -41,42 +41,37 @@ module.exports = function(app, passport) {
         })(req, res);
     });
 
-    app.post('/register',function(req, res) {
+    app.post('/users/auth/sign-up/',function(req, res) {
         const inputData = req.body;
-        req.checkBody('lastName', 'lastName is required').notEmpty();
+        req.checkBody('first_name', 'firstName is required').notEmpty();
         req.checkBody('email', 'Email is required').notEmpty();
         req.checkBody('email', 'Email is not valid').isEmail();
-        req.checkBody('firstName', 'firstName is required').notEmpty();
-        if(!req.body.provider) {
-            req.checkBody('password', 'Password is required').notEmpty();
-            req.checkBody('password2', 'Passwords do not match').equals(req.body.password);
-        }
+        req.checkBody('last_name', 'firstName is required').notEmpty();
 
         var errors = req.validationErrors();
 
         if(errors) {
-            return res.status(200).json({
-                'errors':errors
+            return res.status(400).json({
+                'message':errors
             });
         }
 
         if(!req.body.email) {
-            return res.status(200).json({
+            return res.status(400).json({
                 "message": "All fields required"
             });
         }
 
         const data = {
-            firstName: inputData.firstName,
-            lastName: inputData.lastName,
+            firstName: inputData.first_name,
+            lastName: inputData.last_name,
             email:inputData.email,
             socialId:inputData.id,
-            photo:inputData.profilePicURL,
-            provider:req.body.provider
+            profilePicURL:inputData.profilePicURL,
         };
         knex.select('*').from('users').where('email', inputData.email).first().then((response) => {
            if(response){
-               if(inputData.provider){
+               if(inputData.socialId){
                    knex('users')
                        .where('email', '=', response.email)
                        .update(data)
@@ -92,31 +87,30 @@ module.exports = function(app, passport) {
                                    firstName: response[0].firstName,
                                    lastName: response[0].lastName,
                                    role: response[0].role,
+                                   profilePicURL: response[0].profilePicURL
                                }
                            });
                    })
                }else{
-                   return res.status(200).json({
+                   return res.status(400).json({
                        "message": "email already exist"
                    });
                }
 
            }else{
-                if(!inputData.provider){
+                if(!inputData.socialId){
                     data.password = generatePassword(req.body.password);
-                    data.role = req.body.role;
-                    data.confirmuser = 'No';
+                    data.confirmuser = '0';
                     data.confirmcode =  data.password.substring(4, 32);
                 }else{
-                    data.role='buyer';
-                    data.confirmuser='Yes';
+                    data.confirmuser='1';
                 }
                knex('users').insert(data).returning('*').then((response) => {
                    let token = generateJwt(response[0]);
                    let response_data = {
-                       "success":true,
+                       "msg":'nayi maild',
                    };
-                   if(!inputData.provider){
+                   if(!inputData.socialId){
                        app.mailer.send('confirm', {
                            to: req.body.email,
                            subject: 'Test Email',
@@ -132,7 +126,6 @@ module.exports = function(app, passport) {
                            email: response[0].email,
                            firstName: response[0].firstName,
                            lastName: response[0].lastName,
-                           role: response[0].role,
                        };
                    }
                    return res.status(200).json(response_data);

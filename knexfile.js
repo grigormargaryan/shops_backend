@@ -5,9 +5,9 @@ module.exports = {
         client: 'postgresql',
         connection: {
             host : '127.0.0.1',
-            database: 'poshmark',
-            user:     'poshmark',
-            password: 'poshmark'
+            database: 'shops',
+            user:     'shops',
+            password: 'shops'
         },
         pool: {
             min: 2,
