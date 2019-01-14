@@ -2,6 +2,7 @@ exports.up = function(knex, Promise) {
   return knex.schema.createTable('shops', function (table) {
     table.increments();
     table.string('shop_name').nullable();
+    table.string('organization_name').nullable();
     table.string('country').nullable();
     table.string('city').nullable();
     table.string('street').nullable();
